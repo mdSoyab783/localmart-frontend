@@ -55,7 +55,6 @@ export default function ShopPage() {
   const [search, setSearch] = useState("");
 
   // Get products for this shop (from sample + localStorage dashboard products)
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     // Load registered shop from localStorage
@@ -83,7 +82,7 @@ export default function ShopPage() {
 
   useEffect(() => {
     const stored = localStorage.getItem("shopProducts");
-    const dashboardProducts: Product[] = stored ? JSON.parse(stored).map((p: Product) => ({ ...p, shopId: shopId, shopName: shop?.name || "My Shop" })) : [];
+    const dashboardProducts: Product[] = stored ? JSON.parse(stored).map((p: Product) => ({ ...p, shopId: shopId, shopName: shopInfo?.name || shopsData[shopId]?.name || "My Shop" })) : [];
     const shopSampleProducts = sampleProducts.filter(p => p.shopId === shopId);
     setAllProducts([...shopSampleProducts, ...dashboardProducts]);
   }, [shopId]);
@@ -106,7 +105,7 @@ export default function ShopPage() {
     return matchCat && matchSearch && p.active;
   });
 
-  if (!shop) {
+  if (!shopInfo && !shopsData[shopId]) {
     return (
       <div style={{ fontFamily: "sans-serif", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 16 }}>
         <div style={{ fontSize: 64 }}>🔍</div>
@@ -144,17 +143,17 @@ export default function ShopPage() {
       </nav>
 
       {/* SHOP BANNER */}
-      <div style={{ background: shop.banner, padding: "40px 24px", textAlign: "center" }}>
-        <div style={{ fontSize: 64, marginBottom: 12 }}>{shop.emoji}</div>
-        <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8 }}>{shop.name}</h1>
-        <p style={{ color: "#555", fontSize: 15, maxWidth: 500, margin: "0 auto 16px" }}>{shop.description}</p>
+      <div style={{ background: (shopInfo || shopsData[shopId]).banner, padding: "40px 24px", textAlign: "center" }}>
+        <div style={{ fontSize: 64, marginBottom: 12 }}>{(shopInfo || shopsData[shopId]).emoji}</div>
+        <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8 }}>{(shopInfo || shopsData[shopId]).name}</h1>
+        <p style={{ color: "#555", fontSize: 15, maxWidth: 500, margin: "0 auto 16px" }}>{(shopInfo || shopsData[shopId]).description}</p>
         <div style={{ display: "flex", gap: 20, justifyContent: "center", flexWrap: "wrap" }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: "#555" }}>📍 {shop.distance} away</span>
-          <span style={{ fontSize: 14, fontWeight: 700, color: "#555" }}>⭐ {shop.rating} ({shop.reviews} reviews)</span>
-          <span style={{ fontSize: 14, fontWeight: 800, color: shop.open ? "#51CF66" : "#FF6B6B" }}>
-            {shop.open ? "● Open Now" : "● Closed"}
+          <span style={{ fontSize: 14, fontWeight: 700, color: "#555" }}>📍 {(shopInfo || shopsData[shopId]).distance} away</span>
+          <span style={{ fontSize: 14, fontWeight: 700, color: "#555" }}>⭐ {(shopInfo || shopsData[shopId]).rating} ({(shopInfo || shopsData[shopId]).reviews} reviews)</span>
+          <span style={{ fontSize: 14, fontWeight: 800, color: (shopInfo || shopsData[shopId]).open ? "#51CF66" : "#FF6B6B" }}>
+            {(shopInfo || shopsData[shopId]).open ? "● Open Now" : "● Closed"}
           </span>
-          <span style={{ fontSize: 14, fontWeight: 700, color: "#555" }}>🏷️ {shop.type}</span>
+          <span style={{ fontSize: 14, fontWeight: 700, color: "#555" }}>🏷️ {(shopInfo || shopsData[shopId]).type}</span>
         </div>
       </div>
 

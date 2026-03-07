@@ -37,26 +37,52 @@ export default function ShopAuthPage() {
     setRegisterForm({ ...registerForm, [target.name]: target.type === "checkbox" ? target.checked : target.value });
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!loginForm.email || !loginForm.password) {
       showToast("Please fill in all fields!", "error"); return;
     }
-    const stored = localStorage.getItem("shopOwner");
-    if (!stored) { showToast("No shop account found! Please register first.", "error"); return; }
-    const shopOwner = JSON.parse(stored);
-    if (shopOwner.email !== loginForm.email || shopOwner.password !== loginForm.password) {
-      showToast("Invalid email or password!", "error"); return;
-    }
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch("http://localhost:8000/api/auth/shop/login", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: loginForm.email, password: loginForm.password })
+      });
+      const data = await res.json();
       setLoading(false);
-      showToast("✅ Welcome back! Redirecting to dashboard...", "success");
-      localStorage.setItem("shopOwnerLoggedIn", JSON.stringify({ email: shopOwner.email, shopName: shopOwner.shopName, ownerName: shopOwner.ownerName }));
+      if (!res.ok) { showToast("❌ " + data.message, "error"); return; }
+      localStorage.setItem("shopOwner", JSON.stringify({ shopId: data.shop.id, ...data.shop }));
+      localStorage.setItem("shopToken", data.token);
+      localStorage.setItem("shopOwnerLoggedIn", JSON.stringify({ email: data.shop.email, shopName: data.shop.shopName, ownerName: data.shop.ownerName, shopId: data.shop.id }));
+      
+      // Add shop to allShops list
+      const allShops = JSON.parse(localStorage.getItem("allShops") || "[]");
+      const shopExists = allShops.some((s: any) => s.id === data.shop.id);
+      if (!shopExists) {
+        allShops.push({
+          id: data.shop.id,
+          shopName: data.shop.shopName,
+          ownerName: data.shop.ownerName,
+          category: data.shop.category || "Groceries",
+          address: data.shop.address,
+          phone: data.shop.phone,
+          rating: 4.5,
+          reviews: 0,
+          distance: "0 km",
+          open: true,
+          productCount: 0
+        });
+        localStorage.setItem("allShops", JSON.stringify(allShops));
+      }
+      
+      showToast("✅ Welcome back, " + data.shop.shopName + "!", "success");
       setTimeout(() => { window.location.href = "/dashboard"; }, 2000);
-    }, 1500);
+    } catch (err) {
+      setLoading(false);
+      showToast("❌ Server error. Make sure backend is running!", "error");
+    }
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!registerForm.ownerName || !registerForm.shopName || !registerForm.email || !registerForm.phone || !registerForm.password || !registerForm.address) {
       showToast("Please fill in all required fields!", "error"); return;
     }
@@ -70,21 +96,45 @@ export default function ShopAuthPage() {
       showToast("Please accept the Terms & Conditions!", "error"); return;
     }
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch("http://localhost:8000/api/auth/shop/signup", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          shopName: registerForm.shopName, ownerName: registerForm.ownerName,
+          email: registerForm.email, password: registerForm.password,
+          phone: registerForm.phone, address: registerForm.address, category: registerForm.category
+        })
+      });
+      const data = await res.json();
       setLoading(false);
-      const shopId = registerForm.shopName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-      const shopData = { ...registerForm, shopId };
-      localStorage.setItem("shopOwner", JSON.stringify(shopData));
-      localStorage.setItem("shopOwnerLoggedIn", JSON.stringify({ email: registerForm.email, shopName: registerForm.shopName, ownerName: registerForm.ownerName, shopId }));
-      // Save to all shops list
+      if (!res.ok) { showToast("❌ " + data.message, "error"); return; }
+      localStorage.setItem("shopOwner", JSON.stringify({ shopId: data.shop.id, ...data.shop }));
+      localStorage.setItem("shopToken", data.token);
+      localStorage.setItem("shopOwnerLoggedIn", JSON.stringify({ email: data.shop.email, shopName: data.shop.shopName, ownerName: data.shop.ownerName, shopId: data.shop.id }));
+      
+      // Add shop to allShops list
       const allShops = JSON.parse(localStorage.getItem("allShops") || "[]");
-      const shopEntry = { id: shopId, shopName: registerForm.shopName, ownerName: registerForm.ownerName, category: registerForm.category, address: registerForm.address, phone: registerForm.phone, rating: 0, reviews: 0, distance: "Nearby", open: true, productCount: 0 };
-      const exists = allShops.find((s) => s.id === shopId);
-      if (!exists) allShops.push(shopEntry);
-      localStorage.setItem("allShops", JSON.stringify(allShops));
+      const shopExists = allShops.some((s: any) => s.id === data.shop.id);
+      if (!shopExists) {
+        allShops.push({
+          id: data.shop.id,
+          shopName: data.shop.shopName,
+          ownerName: data.shop.ownerName,
+          category: data.shop.category || "Groceries",
+          address: data.shop.address,
+          phone: data.shop.phone,
+          rating: 4.5,
+          reviews: 0,
+          distance: "0 km",
+          open: true,
+          productCount: 0
+        });
+        localStorage.setItem("allShops", JSON.stringify(allShops));
+      }
+      
       showToast("🎉 Shop registered successfully! Redirecting to dashboard...", "success");
       setTimeout(() => { window.location.href = "/dashboard"; }, 2000);
-    }, 1500);
+    } catch(err) { setLoading(false); showToast("Server error. Make sure backend is running!", "error"); }
   };
 
   return (

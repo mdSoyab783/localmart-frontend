@@ -14,11 +14,12 @@ type OrderItem = {
 
 type Order = {
   orderId: string;
-  date: string;
-  status: "Pending" | "Confirmed" | "Out for Delivery" | "Delivered" | "Cancelled";
+  date?: string;
+  createdAt?: string;
+  status: "Pending" | "Confirmed" | "Out for Delivery" | "Delivered" | "Cancelled" | "Pending Payment";
   items: OrderItem[];
   total: number;
-  deliveryFee: number;
+  deliveryFee?: number;
   address: string;
   paymentMethod: string;
 };
@@ -29,6 +30,7 @@ const statusColors: Record<string, { bg: string; color: string; icon: string }> 
   "Out for Delivery": { bg: "#fff0f5", color: "#c2255c", icon: "🚚" },
   "Delivered": { bg: "#d3f9d8", color: "#2f9e44", icon: "🎉" },
   "Cancelled": { bg: "#fff5f5", color: "#c92a2a", icon: "❌" },
+  "Pending Payment": { bg: "#fff3bf", color: "#e67700", icon: "⏳" },
 };
 
 // Sample orders - later will come from backend
@@ -79,7 +81,7 @@ export default function OrdersPage() {
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
 
-  useEffect(() => {
+  useEffect(() => { const run = async () => {
     const stored = localStorage.getItem("user");
     if (stored) setUser(JSON.parse(stored));
 
@@ -90,7 +92,7 @@ export default function OrdersPage() {
     } else {
       setOrders(sampleOrders);
     }
-  }, []);
+  }; run(); }, []);
 
   const filters = ["All", "Pending", "Confirmed", "Out for Delivery", "Delivered", "Cancelled"];
 
@@ -103,39 +105,39 @@ export default function OrdersPage() {
   };
 
   return (
-    <div style={{ fontFamily: "sans-serif", minHeight: "100vh", background: "#FAFAF7", color: "#1a1a2e" }}>
+    <div style={{ fontFamily: "sans-serif", minHeight: "100vh", background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)", color: "#1a1a2e" }}>
 
       {/* NAVBAR */}
-      <nav style={{ background: "#fff", padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", position: "sticky", top: 0, zIndex: 100 }}>
+      <nav style={{ background: "linear-gradient(90deg, #667eea 0%, #764ba2 100%)", padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 4px 20px rgba(0,0,0,0.15)", position: "sticky", top: 0, zIndex: 100 }}>
         <a href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-          <div style={{ background: "#FF6B6B", width: 36, height: 36, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🛍️</div>
-          <span style={{ fontWeight: 800, fontSize: 20, color: "#1a1a2e" }}>LocalMart</span>
+          <div style={{ background: "#fff", width: 40, height: 40, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🛍️</div>
+          <span style={{ fontWeight: 900, fontSize: 22, color: "#fff" }}>LocalMart</span>
         </a>
-        <h1 style={{ fontSize: 18, fontWeight: 800 }}>📦 My Orders</h1>
-        <a href="/" style={{ fontSize: 14, fontWeight: 700, color: "#555", textDecoration: "none" }}>← Continue Shopping</a>
+        <h1 style={{ fontSize: 20, fontWeight: 900, color: "#fff" }}>📦 My Orders</h1>
+        <a href="/" style={{ fontSize: 14, fontWeight: 800, color: "#fff", textDecoration: "none", background: "rgba(255,255,255,0.2)", padding: "8px 16px", borderRadius: 8 }}>← Continue Shopping</a>
       </nav>
 
-      <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}>
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: "40px 24px" }}>
 
         {/* USER GREETING */}
         {user && (
-          <div style={{ background: "#fff", borderRadius: 16, padding: "20px 24px", marginBottom: 24, border: "1px solid #f0f0f0", display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={{ width: 48, height: 48, borderRadius: 14, background: "linear-gradient(135deg, #FF6B6B, #FF8E53)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>👤</div>
+          <div style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", borderRadius: 16, padding: "28px 32px", marginBottom: 32, display: "flex", alignItems: "center", gap: 20, boxShadow: "0 10px 30px rgba(102, 126, 234, 0.2)" }}>
+            <div style={{ width: 56, height: 56, borderRadius: 16, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>👤</div>
             <div>
-              <div style={{ fontWeight: 800, fontSize: 16 }}>Hey, {user.name}! 👋</div>
-              <div style={{ fontSize: 13, color: "#888", fontWeight: 600 }}>Here are all your orders</div>
+              <div style={{ fontWeight: 900, fontSize: 18, color: "#fff" }}>Hey, {user.name}! 👋</div>
+              <div style={{ fontSize: 14, color: "rgba(255,255,255,0.8)", fontWeight: 600 }}>Here are all your orders</div>
             </div>
             <div style={{ marginLeft: "auto", textAlign: "right" }}>
-              <div style={{ fontWeight: 900, fontSize: 22 }}>{orders.length}</div>
-              <div style={{ fontSize: 12, color: "#888", fontWeight: 600 }}>Total Orders</div>
+              <div style={{ fontWeight: 900, fontSize: 32, color: "#fff" }}>{orders.length}</div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", fontWeight: 600 }}>Total Orders</div>
             </div>
           </div>
         )}
 
         {/* FILTER TABS */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 10, marginBottom: 32, flexWrap: "wrap" }}>
           {filters.map(f => (
-            <button key={f} onClick={() => setActiveFilter(f)} style={{ padding: "8px 16px", borderRadius: 20, border: "2px solid", borderColor: activeFilter === f ? "#FF6B6B" : "#f0f0f0", background: activeFilter === f ? "#FF6B6B" : "#fff", color: activeFilter === f ? "#fff" : "#555", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+            <button key={f} onClick={() => setActiveFilter(f)} style={{ padding: "10px 20px", borderRadius: 24, border: "none", background: activeFilter === f ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" : "#fff", color: activeFilter === f ? "#fff" : "#555", fontWeight: 800, fontSize: 14, cursor: "pointer", boxShadow: activeFilter === f ? "0 4px 15px rgba(102, 126, 234, 0.3)" : "0 2px 8px rgba(0,0,0,0.1)", transition: "all 0.3s ease" }}>
               {f} {f !== "All" && `(${orders.filter(o => o.status === f).length})`}
             </button>
           ))}
@@ -143,38 +145,38 @@ export default function OrdersPage() {
 
         {/* ORDERS LIST */}
         {filteredOrders.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "80px 20px", background: "#fff", borderRadius: 20, border: "1px solid #f0f0f0" }}>
-            <div style={{ fontSize: 64, marginBottom: 16 }}>📦</div>
-            <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>No orders found</h3>
-            <p style={{ color: "#888", marginBottom: 24 }}>You haven't placed any orders yet!</p>
-            <a href="/" style={{ background: "#FF6B6B", color: "#fff", padding: "12px 28px", borderRadius: 12, fontWeight: 800, fontSize: 15, textDecoration: "none", display: "inline-block" }}>
+          <div style={{ textAlign: "center", padding: "100px 20px", background: "#fff", borderRadius: 24, boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}>
+            <div style={{ fontSize: 80, marginBottom: 20 }}>📦</div>
+            <h3 style={{ fontSize: 24, fontWeight: 900, marginBottom: 12, color: "#1a1a2e" }}>No orders found</h3>
+            <p style={{ color: "#888", marginBottom: 32, fontSize: 16 }}>You haven't placed any orders yet!</p>
+            <a href="/" style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "#fff", padding: "14px 32px", borderRadius: 12, fontWeight: 900, fontSize: 16, textDecoration: "none", display: "inline-block", boxShadow: "0 4px 15px rgba(102, 126, 234, 0.3)" }}>
               🛍️ Start Shopping
             </a>
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             {filteredOrders.map(order => (
-              <div key={order.orderId} style={{ background: "#fff", borderRadius: 20, border: "1px solid #f0f0f0", overflow: "hidden" }}>
+              <div key={order.orderId} style={{ background: "#fff", borderRadius: 20, overflow: "hidden", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", border: "1px solid rgba(0,0,0,0.05)", transition: "all 0.3s ease" }}>
 
                 {/* ORDER HEADER */}
-                <div style={{ padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+                <div style={{ padding: "24px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16, borderBottom: "1px solid #f0f0f0" }}>
                   <div>
-                    <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 4 }}>Order #{order.orderId}</div>
-                    <div style={{ fontSize: 13, color: "#888", fontWeight: 600 }}>📅 {new Date(order.date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</div>
+                    <div style={{ fontWeight: 900, fontSize: 16, marginBottom: 6, color: "#1a1a2e" }}>Order #{order.orderId}</div>
+                    <div style={{ fontSize: 14, color: "#666", fontWeight: 700 }}>📅 {new Date(order.date || order.createdAt || new Date()).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</div>
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                     {/* STATUS BADGE */}
-                    <span style={{ background: statusColors[order.status].bg, color: statusColors[order.status].color, padding: "6px 14px", borderRadius: 20, fontWeight: 800, fontSize: 13 }}>
-                      {statusColors[order.status].icon} {order.status}
+                    <span style={{ background: statusColors[order.status]?.bg || "#ddd", color: statusColors[order.status]?.color || "#666", padding: "8px 16px", borderRadius: 24, fontWeight: 900, fontSize: 14 }}>
+                      {statusColors[order.status]?.icon || "📦"} {order.status}
                     </span>
-                    <div style={{ fontWeight: 900, fontSize: 16 }}>₹{order.total}</div>
+                    <div style={{ fontWeight: 900, fontSize: 18, color: "#667eea" }}>₹{order.total}</div>
                   </div>
                 </div>
 
                 {/* ORDER PROGRESS BAR */}
                 {order.status !== "Cancelled" && (
-                  <div style={{ padding: "0 24px 16px" }}>
+                  <div style={{ padding: "20px 28px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
                       {["Confirmed", "Out for Delivery", "Delivered"].map((step, i) => {
                         const steps = ["Confirmed", "Out for Delivery", "Delivered"];
@@ -183,13 +185,13 @@ export default function OrdersPage() {
                         const isCompleted = stepIndex <= currentIndex;
                         return (
                           <div key={step} style={{ display: "flex", alignItems: "center", flex: 1 }}>
-                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                              <div style={{ width: 28, height: 28, borderRadius: "50%", background: isCompleted ? "#51CF66" : "#f0f0f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>
+                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                              <div style={{ width: 32, height: 32, borderRadius: "50%", background: isCompleted ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" : "#f0f0f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, color: isCompleted ? "#fff" : "#aaa", fontWeight: 900 }}>
                                 {isCompleted ? "✓" : i + 1}
                               </div>
-                              <span style={{ fontSize: 10, fontWeight: 700, color: isCompleted ? "#51CF66" : "#aaa", whiteSpace: "nowrap" }}>{step}</span>
+                              <span style={{ fontSize: 11, fontWeight: 800, color: isCompleted ? "#667eea" : "#aaa", whiteSpace: "nowrap" }}>{step}</span>
                             </div>
-                            {i < 2 && <div style={{ flex: 1, height: 3, background: stepIndex < currentIndex ? "#51CF66" : "#f0f0f0", margin: "0 4px", marginBottom: 20 }} />}
+                            {i < 2 && <div style={{ flex: 1, height: 3, background: stepIndex < currentIndex ? "linear-gradient(90deg, #667eea 0%, #764ba2 100%)" : "#f0f0f0", margin: "0 6px", marginBottom: 24 }} />}
                           </div>
                         );
                       })}
@@ -198,35 +200,35 @@ export default function OrdersPage() {
                 )}
 
                 {/* ORDER ITEMS PREVIEW */}
-                <div style={{ padding: "0 24px 16px", display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <div style={{ padding: "20px 28px", display: "flex", gap: 10, flexWrap: "wrap", borderTop: "1px solid #f0f0f0" }}>
                   {order.items.map(item => (
-                    <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 8, background: "#f9f9f9", padding: "8px 12px", borderRadius: 10 }}>
-                      <span style={{ fontSize: 20 }}>{item.image ? <img src={item.image} style={{ width: 24, height: 24, objectFit: "cover", borderRadius: 4 }} /> : item.emoji}</span>
+                    <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 10, background: "#f9f9f9", padding: "10px 14px", borderRadius: 12 }}>
+                      <span style={{ fontSize: 22 }}>{item.image ? <img src={item.image} style={{ width: 28, height: 28, objectFit: "cover", borderRadius: 6 }} /> : item.emoji}</span>
                       <div>
-                        <div style={{ fontSize: 13, fontWeight: 700 }}>{item.name} {item.size && <span style={{ background: "#FF6B6B", color: "#fff", padding: "1px 6px", borderRadius: 4, fontSize: 11 }}>{item.size}</span>}</div>
-                        <div style={{ fontSize: 12, color: "#888" }}>x{item.quantity} • ₹{item.price * item.quantity}</div>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: "#1a1a2e" }}>{item.name} {item.size && <span style={{ background: "#667eea", color: "#fff", padding: "2px 8px", borderRadius: 4, fontSize: 12, fontWeight: 700 }}>{item.size}</span>}</div>
+                        <div style={{ fontSize: 13, color: "#666", fontWeight: 700 }}>x{item.quantity} • ₹{item.price * item.quantity}</div>
                       </div>
                     </div>
                   ))}
                 </div>
 
                 {/* EXPAND BUTTON */}
-                <div style={{ padding: "12px 24px", borderTop: "1px solid #f0f0f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <button onClick={() => setExpandedOrder(expandedOrder === order.orderId ? null : order.orderId)} style={{ fontSize: 13, fontWeight: 700, color: "#FF6B6B", background: "none", border: "none", cursor: "pointer" }}>
+                <div style={{ padding: "16px 28px", borderTop: "1px solid #f0f0f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <button onClick={() => setExpandedOrder(expandedOrder === order.orderId ? null : order.orderId)} style={{ fontSize: 14, fontWeight: 800, color: "#667eea", background: "none", border: "none", cursor: "pointer" }}>
                     {expandedOrder === order.orderId ? "▲ Hide Details" : "▼ View Details"}
                   </button>
-                  <div style={{ display: "flex", gap: 8 }}>
+                  <div style={{ display: "flex", gap: 10 }}>
                     {(order.status === "Pending" || order.status === "Confirmed") && (
-                      <button onClick={() => cancelOrder(order.orderId)} style={{ padding: "6px 14px", borderRadius: 10, border: "2px solid #FF6B6B", background: "#fff", color: "#FF6B6B", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                      <button onClick={() => cancelOrder(order.orderId)} style={{ padding: "8px 16px", borderRadius: 10, border: "2px solid #667eea", background: "#fff", color: "#667eea", fontWeight: 800, fontSize: 14, cursor: "pointer", transition: "all 0.3s ease" }}>
                         Cancel Order
                       </button>
                     )}
                     {order.status === "Delivered" && (
-                      <button style={{ padding: "6px 14px", borderRadius: 10, border: "none", background: "#FF6B6B", color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                      <button style={{ padding: "8px 16px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "#fff", fontWeight: 800, fontSize: 14, cursor: "pointer", boxShadow: "0 4px 15px rgba(102, 126, 234, 0.3)" }}>
                         ⭐ Rate Order
                       </button>
                     )}
-                    <a href="/" style={{ padding: "6px 14px", borderRadius: 10, border: "2px solid #f0f0f0", background: "#fff", color: "#555", fontWeight: 700, fontSize: 13, cursor: "pointer", textDecoration: "none" }}>
+                    <a href="/" style={{ padding: "8px 16px", borderRadius: 10, border: "2px solid #e0e0e0", background: "#fff", color: "#555", fontWeight: 800, fontSize: 14, cursor: "pointer", textDecoration: "none" }}>
                       🔄 Reorder
                     </a>
                   </div>
@@ -234,29 +236,29 @@ export default function OrdersPage() {
 
                 {/* EXPANDED DETAILS */}
                 {expandedOrder === order.orderId && (
-                  <div style={{ padding: "20px 24px", borderTop: "1px solid #f0f0f0", background: "#f9f9f9" }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+                  <div style={{ padding: "24px 28px", borderTop: "1px solid #f0f0f0", background: "#f9f9f9" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
                       <div>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: "#555", marginBottom: 4 }}>📍 Delivery Address</div>
-                        <div style={{ fontSize: 14, fontWeight: 600 }}>{order.address}</div>
+                        <div style={{ fontSize: 14, fontWeight: 900, color: "#667eea", marginBottom: 8 }}>📍 Delivery Address</div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: "#1a1a2e" }}>{order.address}</div>
                       </div>
                       <div>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: "#555", marginBottom: 4 }}>💳 Payment Method</div>
-                        <div style={{ fontSize: 14, fontWeight: 600 }}>{order.paymentMethod}</div>
+                        <div style={{ fontSize: 14, fontWeight: 900, color: "#667eea", marginBottom: 8 }}>💳 Payment Method</div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: "#1a1a2e" }}>{order.paymentMethod}</div>
                       </div>
                     </div>
-                    <div style={{ borderTop: "1px solid #f0f0f0", paddingTop: 16 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, fontWeight: 600, color: "#555", marginBottom: 6 }}>
+                    <div style={{ borderTop: "1px solid #e0e0e0", paddingTop: 20 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 15, fontWeight: 700, color: "#555", marginBottom: 8 }}>
                         <span>Subtotal</span>
-                        <span>₹{order.total - order.deliveryFee}</span>
+                        <span>₹{order.total - (order.deliveryFee || 0)}</span>
                       </div>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, fontWeight: 600, color: "#555", marginBottom: 6 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 15, fontWeight: 700, color: "#555", marginBottom: 12 }}>
                         <span>Delivery Fee</span>
-                        <span style={{ color: order.deliveryFee === 0 ? "#51CF66" : "#1a1a2e" }}>{order.deliveryFee === 0 ? "FREE" : `₹${order.deliveryFee}`}</span>
+                        <span style={{ color: (order.deliveryFee || 0) === 0 ? "#51CF66" : "#1a1a2e", fontWeight: 900 }}>{(order.deliveryFee || 0) === 0 ? "FREE ✓" : `₹${order.deliveryFee}`}</span>
                       </div>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 16, fontWeight: 900, borderTop: "1px solid #f0f0f0", paddingTop: 8 }}>
-                        <span>Total</span>
-                        <span style={{ color: "#FF6B6B" }}>₹{order.total}</span>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 18, fontWeight: 900, borderTop: "2px solid #667eea", paddingTop: 12, color: "#667eea" }}>
+                        <span>Total Amount</span>
+                        <span>₹{order.total}</span>
                       </div>
                     </div>
                   </div>
@@ -267,7 +269,7 @@ export default function OrdersPage() {
         )}
       </div>
 
-      <footer style={{ background: "#1a1a2e", color: "rgba(255,255,255,0.5)", padding: "20px 24px", textAlign: "center", fontSize: 13, marginTop: 40 }}>
+      <footer style={{ background: "#1a1a2e", color: "rgba(255,255,255,0.6)", padding: "24px 24px", textAlign: "center", fontSize: 14, marginTop: 60, fontWeight: 700 }}>
         🛍️ LocalMart • Supporting local businesses in Nangal, Punjab
       </footer>
     </div>

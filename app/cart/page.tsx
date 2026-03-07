@@ -87,15 +87,100 @@ export default function CartPage() {
   const deliveryFee = subtotal > 499 ? 0 : 40;
   const finalTotal = subtotal - couponDiscount + deliveryFee;
 
-  const handleCheckout = () => {
+  const loadRazorpay = () => new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+
+  const handleRazorpayPayment = async () => {
+    const loaded = await loadRazorpay();
+    if (!loaded) { showToast("❌ Razorpay failed to load!", "error"); return; }
+    
+    // Allow guest checkout or use existing token
+    const token = localStorage.getItem("token")?.replace(/^'|'$/g, "");
+    const userStr = localStorage.getItem("user");
+    const userData = userStr ? JSON.parse(userStr) : {};
+    
+    setLoading(true);
+    try {
+      const headers: any = { "Content-Type": "application/json" };
+      if (token) {
+        headers.Authorization = "Bearer " + token;
+      }
+      
+      const res = await fetch("/api/payment", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ amount: finalTotal })
+      });
+      
+      if (!res.ok) {
+        throw new Error("Payment request failed");
+      }
+      
+      const data = await res.json();
+      setLoading(false);
+      
+      // For mock payment, auto-complete after 1 second
+      if (data.mock) {
+        setTimeout(() => {
+          showToast("✅ Payment successful! Order placed!", "success");
+          handleCheckout();
+        }, 1000);
+        return;
+      }
+      
+      const options = {
+        key: data.key,
+        amount: data.amount,
+        currency: data.currency,
+        name: "LocalMart",
+        description: "Order Payment",
+        order_id: data.orderId,
+        handler: async (response: any) => {
+          showToast("✅ Payment successful! Order placed!", "success");
+          await handleCheckout();
+        },
+        prefill: { name: userData?.name || "Guest", email: userData?.email || "" },
+        theme: { color: "#FF6B6B" }
+      };
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      setLoading(false);
+      showToast("❌ Payment failed. Try again!", "error");
+      console.error("Payment error:", err);
+    }
+  };
+
+  const handleCheckout = async () => {
     if (cartItems.length === 0) { showToast("Your cart is empty!", "error"); return; }
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
 
       // Save order to localStorage
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const existingOrders = JSON.parse(localStorage.getItem("userOrders") || "[]");
+      // Save to MongoDB
+      try {
+        const token = localStorage.getItem("token");
+        if (token) {
+          await fetch("http://localhost:8000/api/orders", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+            body: JSON.stringify({
+              items: cartItems,
+              total: finalTotal,
+              deliveryFee: deliveryFee,
+              address: user?.address || "Nangal, Punjab",
+              paymentMethod: "Cash on Delivery",
+              status: "Confirmed"
+            })
+          });
+        }
+      } catch(err) { console.log("Order API error", err); }
       const newOrder = {
         orderId: "LM-" + Date.now(),
         date: new Date().toISOString().split("T")[0],
@@ -110,8 +195,6 @@ export default function CartPage() {
 
       showToast("✅ Order placed successfully!", "success");
       saveCart([]);
-      setTimeout(() => { window.location.href = "/orders"; }, 2000);
-    }, 2000);
   };
 
   return (
@@ -257,8 +340,16 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                <button onClick={handleCheckout} disabled={loading} style={{ width: "100%", padding: 16, background: loading ? "#ffb3b3" : "#FF6B6B", color: "#fff", border: "none", borderRadius: 14, fontWeight: 800, fontSize: 16, cursor: loading ? "not-allowed" : "pointer", marginBottom: 12 }}>
-                  {loading ? "Placing Order..." : "🚀 Place Order"}
+                <button 
+                  onClick={() => {
+                    if (cartItems.length === 0) {
+                      showToast("❌ Your cart is empty!", "error");
+                      return;
+                    }
+                    window.location.href = "/checkout";
+                  }}
+                  style={{ width: "100%", padding: 16, background: "#FF6B6B", color: "#fff", border: "none", borderRadius: 14, fontWeight: 800, fontSize: 16, cursor: "pointer", marginBottom: 12 }}>
+                  💳 Proceed to Checkout
                 </button>
 
                 <a href="/" style={{ display: "block", textAlign: "center", fontSize: 14, fontWeight: 700, color: "#555", textDecoration: "none", padding: "10px 0" }}>

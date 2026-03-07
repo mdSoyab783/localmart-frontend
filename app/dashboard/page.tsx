@@ -14,6 +14,35 @@ type Product = {
   image?: string;
 };
 
+// Convert MongoDB data to Product type with numeric IDs
+const convertMongoDBProduct = (mongoProduct: any, idx: number): Product => {
+  return {
+    id: typeof mongoProduct.id === 'number' ? mongoProduct.id : idx + 1,
+    name: mongoProduct.name || '',
+    price: mongoProduct.price || 0,
+    originalPrice: mongoProduct.originalPrice || mongoProduct.price || 0,
+    category: mongoProduct.category || 'Groceries',
+    description: mongoProduct.description || '',
+    emoji: mongoProduct.emoji || '🛍️',
+    stock: mongoProduct.stock || 0,
+    active: mongoProduct.active !== false,
+    image: mongoProduct.image || ''
+  };
+};
+
+// Ensure products have unique numeric IDs
+const ensureUniqueIds = (products: any[]): Product[] => {
+  const seen = new Set<number>();
+  return products.map((p, idx) => {
+    const product = convertMongoDBProduct(p, idx);
+    if (seen.has(product.id)) {
+      return null;
+    }
+    seen.add(product.id);
+    return product;
+  }).filter(p => p !== null) as Product[];
+};
+
 type ShopOwner = {
   email: string;
   shopName: string;
@@ -38,29 +67,106 @@ export default function DashboardPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [profileForm, setProfileForm] = useState({ ownerName: "", shopName: "", email: "", phone: "", address: "", category: "Groceries" });
   const [profileEditing, setProfileEditing] = useState<boolean>(false);
+  const [cartItems, setCartItems] = useState<any[]>([]);  // Add cart state to trigger re-renders
 
-  useEffect(() => {
-    const stored = localStorage.getItem("shopOwnerLoggedIn");
-    if (!stored) { window.location.href = "/shop-auth"; return; }
-    const owner = JSON.parse(stored);
-    setShopOwner(owner);
-    setProfileForm({
-      ownerName: owner.ownerName || "",
-      shopName: owner.shopName || "",
-      email: owner.email || "",
-      phone: owner.phone || "",
-      address: owner.address || "",
-      category: owner.category || "Groceries",
-    });
-    const shopId = owner.shopId || "default";
-    const storedProducts = localStorage.getItem("shopProducts_" + shopId);
-    if (storedProducts) setProducts(JSON.parse(storedProducts));
+  useEffect(() => { 
+    const run = async () => {
+      const stored = localStorage.getItem("shopOwnerLoggedIn");
+      console.log("🔍 Dashboard Load - shopOwnerLoggedIn:", stored ? JSON.parse(stored) : "NOT FOUND");
+      if (!stored) { window.location.href = "/shop-auth"; return; }
+      const owner = JSON.parse(stored);
+      setShopOwner(owner);
+      setProfileForm({
+        ownerName: owner.ownerName || "",
+        shopName: owner.shopName || "",
+        email: owner.email || "",
+        phone: owner.phone || "",
+        address: owner.address || "",
+        category: owner.category || "Groceries",
+      });
+      const shopId = owner.shopId || "default";
+      console.log("📦 Looking for products with shopId:", shopId);
+      
+      // Load products from localStorage first
+      const key = "shopProducts_" + shopId;
+      const storedProducts = localStorage.getItem(key);
+      console.log("🔍 localStorage.getItem('" + key + "'):", storedProducts ? JSON.parse(storedProducts) : "NOT FOUND");
+      if (storedProducts) {
+        try {
+          const parsed = JSON.parse(storedProducts) as Product[];
+          const deduped = ensureUniqueIds(parsed);
+          console.log("✅ Loaded from localStorage:", deduped);
+          setProducts(deduped);
+        } catch (e) {
+          console.log("❌ Error parsing localStorage:", e);
+          // Ignore parse errors
+        }
+      } else {
+        console.log("⚠️ No products found in localStorage for key:", key);
+      }
+      
+      // Try to sync with MongoDB
+      try {
+        const token = localStorage.getItem("shopToken");
+        const res = await fetch("http://localhost:8000/api/products?shopId=" + shopId, {
+          headers: { Authorization: "Bearer " + token }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          console.log("📡 Loaded from MongoDB:", data);
+          const deduped = ensureUniqueIds(data as Product[]);
+          setProducts(deduped);
+        }
+      } catch (err) {
+        console.log("❌ MongoDB sync failed:", err);
+        // Network error, use localStorage data
+      }
+    }; 
+    run(); 
   }, []);
 
-  const saveProducts = (updated: Product[]) => {
-    setProducts(updated);
+  // Listen for cart changes to update stock display
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const cart = JSON.parse(localStorage.getItem("cartItems") || "[]");
+      setCartItems(cart);
+    };
+
+    handleStorageChange(); // Load initial cart
+
+    // Listen for storage changes from other tabs/windows
+    window.addEventListener("storage", handleStorageChange);
+
+    // Check for cart changes periodically (for same tab)
+    const interval = setInterval(handleStorageChange, 500);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const saveProducts = async (updated: Product[]) => {
+    // Ensure unique IDs before saving
+    const clean = ensureUniqueIds(updated);
+    setProducts(clean);
     const shopId = shopOwner?.shopId || "default";
-    localStorage.setItem("shopProducts_" + shopId, JSON.stringify(updated));
+    const key = "shopProducts_" + shopId;
+    console.log("🔍 Saving products to localStorage:", { key, count: clean.length, shopId, products: clean });
+    localStorage.setItem(key, JSON.stringify(clean));
+    const saved = localStorage.getItem(key);
+    console.log("✅ Saved to localStorage, verifying:", saved ? "SUCCESS" : "FAILED");
+    // Also save to MongoDB
+    try {
+      const token = localStorage.getItem("shopToken");
+      const method = editId ? "PUT" : "POST";
+      const url = editId ? "http://localhost:8000/api/products/" + editId : "http://localhost:8000/api/products";
+      await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ ...form, shopId, shopName: shopOwner?.shopName || "" })
+      });
+    } catch (err) { console.log("API save failed", err); }
   };
 
   const showToast = (message: string, type: "success" | "error") => {
@@ -97,7 +203,7 @@ export default function DashboardPage() {
       const full = JSON.parse(fullData);
       localStorage.setItem("shopOwner", JSON.stringify({ ...full, ...profileForm }));
     }
-    setShopOwner(updated);
+    setShopOwner({ ...updated, shopId: updated.shopId || "" });
     setProfileEditing(false);
     showToast("✅ Profile updated successfully!", "success");
   };
@@ -115,7 +221,8 @@ export default function DashboardPage() {
       showToast("✅ Product updated successfully!", "success");
       setEditId(null);
     } else {
-      const newProduct: Product = { id: Date.now(), name: form.name, price: Number(form.price), originalPrice: Number(form.originalPrice), category: form.category, description: form.description, emoji: form.emoji, image: form.image || "", stock: Number(form.stock), active: true };
+      const maxId = products.length > 0 ? Math.max(...products.map(p => p.id)) : 0;
+      const newProduct: Product = { id: maxId + 1, name: form.name, price: Number(form.price), originalPrice: Number(form.originalPrice), category: form.category, description: form.description, emoji: form.emoji, image: form.image || "", stock: Number(form.stock), active: true };
       saveProducts([...products, newProduct]);
       showToast("🎉 Product added successfully!", "success");
     }
@@ -124,7 +231,7 @@ export default function DashboardPage() {
   };
 
   const handleEdit = (product: Product) => {
-    setForm({ name: product.name, price: String(product.price), originalPrice: String(product.originalPrice), category: product.category, description: product.description, emoji: product.emoji, stock: String(product.stock) });
+    setForm({ name: product.name, price: String(product.price), originalPrice: String(product.originalPrice), category: product.category, description: product.description, emoji: product.emoji, stock: String(product.stock), image: product.image || "" });
     setEditId(product.id);
     setActiveTab("add");
   };
@@ -144,7 +251,20 @@ export default function DashboardPage() {
     window.location.href = "/shop-auth";
   };
 
+  // Calculate available stock based on cart
+  const getAvailableStock = (productId: number | string) => {
+    const cartItems = JSON.parse(localStorage.getItem("cartItems") || "[]");
+    const cartQuantity = cartItems
+      .filter((item: any) => String(item.id) === String(productId))
+      .reduce((sum: number, item: any) => sum + item.quantity, 0);
+    
+    const product = products.find(p => p.id === productId);
+    const available = product ? product.stock - cartQuantity : 0;
+    return Math.max(0, available);
+  };
+
   const totalRevenue = products.reduce((sum, p) => sum + p.price * p.stock, 0);
+  const outOfStockCount = products.filter(p => getAvailableStock(p.id) === 0).length;
 
   if (!shopOwner) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "sans-serif" }}>
@@ -205,7 +325,7 @@ export default function DashboardPage() {
           {[
             { label: "Total Products", value: products.length, icon: "📦", color: "#e8f4ff" },
             { label: "Active Products", value: products.filter(p => p.active).length, icon: "✅", color: "#d3f9d8" },
-            { label: "Out of Stock", value: products.filter(p => p.stock === 0).length, icon: "⚠️", color: "#fff3bf" },
+            { label: "Out of Stock", value: outOfStockCount, icon: "⚠️", color: "#fff3bf" },
             { label: "Inventory Value", value: `₹${totalRevenue.toLocaleString()}`, icon: "💰", color: "#ffd6e7" },
           ].map((stat) => (
             <div key={stat.label} style={{ background: "#fff", borderRadius: 16, padding: "20px", border: "1px solid #f0f0f0" }}>
@@ -442,7 +562,7 @@ export default function DashboardPage() {
                     <div style={{ fontSize: 40, width: 60, height: 60, background: "#f5f5f5", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>{product.image ? <img src={product.image} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : product.emoji}</div>
                     <div style={{ flex: 1, minWidth: 200 }}>
                       <div style={{ fontWeight: 800, fontSize: 16, marginBottom: 4 }}>{product.name}</div>
-                      <div style={{ fontSize: 13, color: "#888", fontWeight: 600 }}>{product.category} • Stock: {product.stock}</div>
+                      <div style={{ fontSize: 13, color: "#888", fontWeight: 600 }}>{product.category} • Stock: {getAvailableStock(product.id)}/{product.stock} {getAvailableStock(product.id) === 0 ? "❌ OUT OF STOCK" : ""}</div>
                     </div>
                     <div style={{ textAlign: "right", minWidth: 100 }}>
                       <div style={{ fontWeight: 900, fontSize: 18 }}>₹{product.price}</div>

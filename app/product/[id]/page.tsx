@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 
 type Product = {
-  id: number;
+  id: number | string;
   name: string;
   price: number;
   originalPrice: number;
@@ -22,40 +22,107 @@ type Product = {
 
 export default function ProductDetailPage() {
   const params = useParams();
-  const productId = Number(params.id);
+  const productId = params.id as string;  // Keep as string to handle MongoDB IDs
 
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(1);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [cartCount, setCartCount] = useState<number>(0);
+  const [cartItems, setCartItems] = useState<any[]>([]);  // Add cart state to track changes
 
   useEffect(() => {
-    // Load product from all shop owners
-    const allProducts: Product[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith("shopProducts_")) {
-        const prods = JSON.parse(localStorage.getItem(key) || "[]");
-        allProducts.push(...prods);
+    const loadProduct = async () => {
+      // Load product from all shop owners (localStorage)
+      const allProducts: Product[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("shopProducts_")) {
+          const prods = JSON.parse(localStorage.getItem(key) || "[]");
+          allProducts.push(...prods);
+        }
       }
-    }
 
-    // Also check sample products
-    const sampleProducts: Product[] = [
-      { id: 1, name: "Fresh Vegetables Combo", price: 149, originalPrice: 199, category: "Groceries", description: "Fresh seasonal vegetables packed daily from local farms. Includes tomatoes, onions, potatoes, and more.", emoji: "🥦", stock: 50, active: true, shop: "Green Bazaar", rating: 4.8, reviews: 120, color: "#d3f9d8" },
-      { id: 2, name: "Cotton Kurti Set", price: 599, originalPrice: 899, category: "Clothing", description: "Comfortable cotton kurti for daily wear. Available in multiple colors. Soft fabric, easy to wash.", emoji: "👘", stock: 25, active: true, shop: "Anjali Fashions", rating: 4.5, reviews: 85, color: "#ffe8cc" },
-      { id: 3, name: "Skincare Glow Kit", price: 349, originalPrice: 499, category: "Female Items", description: "Complete skincare routine kit with face wash, moisturizer, and sunscreen. Suitable for all skin types.", emoji: "✨", stock: 35, active: true, shop: "Beauty Zone", rating: 4.9, reviews: 200, color: "#ffd6e7" },
-      { id: 4, name: "Basmati Rice 5kg", price: 289, originalPrice: 350, category: "Groceries", description: "Premium aged basmati rice with long grains and aromatic flavor. Perfect for biryani and pulao.", emoji: "🌾", stock: 80, active: true, shop: "Grain House", rating: 4.7, reviews: 310, color: "#fff3bf" },
-    ];
+      // Also check sample products
+      const sampleProducts: Product[] = [
+        { id: 1, name: "Fresh Vegetables Combo", price: 149, originalPrice: 199, category: "Groceries", description: "Fresh seasonal vegetables packed daily from local farms. Includes tomatoes, onions, potatoes, and more.", emoji: "🥦", stock: 50, active: true, shop: "Green Bazaar", rating: 4.8, reviews: 120, color: "#d3f9d8" },
+        { id: 2, name: "Cotton Kurti Set", price: 599, originalPrice: 899, category: "Clothing", description: "Comfortable cotton kurti for daily wear. Available in multiple colors. Soft fabric, easy to wash.", emoji: "👘", stock: 25, active: true, shop: "Anjali Fashions", rating: 4.5, reviews: 85, color: "#ffe8cc" },
+        { id: 3, name: "Skincare Glow Kit", price: 349, originalPrice: 499, category: "Female Items", description: "Complete skincare routine kit with face wash, moisturizer, and sunscreen. Suitable for all skin types.", emoji: "✨", stock: 35, active: true, shop: "Beauty Zone", rating: 4.9, reviews: 200, color: "#ffd6e7" },
+        { id: 4, name: "Basmati Rice 5kg", price: 289, originalPrice: 350, category: "Groceries", description: "Premium aged basmati rice with long grains and aromatic flavor. Perfect for biryani and pulao.", emoji: "🌾", stock: 80, active: true, shop: "Grain House", rating: 4.7, reviews: 310, color: "#fff3bf" },
+      ];
 
-    const found = [...allProducts, ...sampleProducts].find(p => p.id === productId);
-    setProduct(found || null);
+      // First try to find in localStorage products
+      let found = [...allProducts, ...sampleProducts].find(p => {
+        // Match by numeric id or string id
+        return p.id === Number(productId) || String(p.id) === productId;
+      });
 
-    // Load cart count
-    const cartItems = JSON.parse(localStorage.getItem("cartItems") || "[]");
-    setCartCount(cartItems.reduce((s: number, i: { quantity: number }) => s + i.quantity, 0));
+      // If not found locally, try to fetch from MongoDB
+      if (!found) {
+        try {
+          const res = await fetch("http://localhost:8000/api/products");
+          if (res.ok) {
+            const mongoProducts = await res.json();
+            const mongoProduct = mongoProducts.find((p: any) => p._id === productId);
+            if (mongoProduct) {
+              found = {
+                id: mongoProduct._id,
+                name: mongoProduct.name,
+                price: mongoProduct.price,
+                originalPrice: mongoProduct.originalPrice || mongoProduct.price,
+                category: mongoProduct.category || "Groceries",
+                description: mongoProduct.description || "",
+                emoji: mongoProduct.emoji || "🛍️",
+                stock: mongoProduct.stock || 0,
+                active: mongoProduct.active !== false,
+                shopName: mongoProduct.shopName || "Local Shop",
+                image: mongoProduct.image || undefined,
+                rating: 4.5,
+                reviews: Math.floor(Math.random() * 300),
+                color: "#e7f5ff"
+              };
+            }
+          }
+        } catch (err) {
+          console.log("Failed to fetch from MongoDB:", err);
+        }
+      }
+
+      setProduct(found || null);
+    };
+
+    loadProduct();
+
+    // Load cart items and count
+    const items = JSON.parse(localStorage.getItem("cartItems") || "[]");
+    setCartItems(items);
+    setCartCount(items.reduce((s: number, i: { quantity: number }) => s + i.quantity, 0));
   }, [productId]);
+
+  // Listen for cart changes to update available stock display
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const items = JSON.parse(localStorage.getItem("cartItems") || "[]");
+      setCartItems(items);
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    const interval = setInterval(handleStorageChange, 500);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Calculate available stock based on cart
+  const getAvailableStock = () => {
+    if (!product) return 0;
+    const cartQuantity = cartItems
+      .filter((item: any) => String(item.id) === String(product.id))
+      .reduce((sum: number, item: any) => sum + item.quantity, 0);
+    return Math.max(0, product.stock - cartQuantity);
+  };
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type });
@@ -137,7 +204,7 @@ export default function ProductDetailPage() {
           <div>
             <div style={{ background: product.color || "#f5f5f5", borderRadius: 24, height: 380, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 120, overflow: "hidden", border: "1px solid #f0f0f0" }}>
               {product.image ? (
-                <img src={product.image} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <img src={product.image} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 16 }} />
               ) : (
                 product.emoji
               )}

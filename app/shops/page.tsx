@@ -55,14 +55,60 @@ export default function ShopsPage() {
   const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
-    // Load only registered shops from localStorage
-    const registeredShops = JSON.parse(localStorage.getItem("allShops") || "[]");
-    // Update product counts
-    const shopsWithCounts = registeredShops.map((shop) => {
-      const products = JSON.parse(localStorage.getItem("shopProducts_" + shop.id) || "[]");
-      return { ...shop, productCount: products.length };
-    });
-    setShops(shopsWithCounts);
+    const loadShops = async () => {
+      // Clear old hardcoded shops from localStorage on first load
+      const allShops = JSON.parse(localStorage.getItem("allShops") || "[]");
+      const validShops = allShops.filter((s: any) => 
+        s.id && s.shopName && !["ElectroMechanics", "All in One", "electromechanics", "allinone"].includes((s.shopName || "").toLowerCase().replace(/\s/g, ""))
+      );
+      localStorage.setItem("allShops", JSON.stringify(validShops));
+      
+      try {
+        // Try to load shops from MongoDB - correct endpoint
+        const res = await fetch("http://localhost:8000/api/shops");
+        if (res.ok) {
+          const mongoShops = await res.json();
+          console.log("Loaded shops from MongoDB:", mongoShops);
+          
+          // Map MongoDB shops properly
+          const mappedShops = mongoShops.map((shop: any) => ({
+            id: shop._id || shop.id,
+            shopName: shop.shopName,
+            ownerName: shop.ownerName,
+            category: shop.category || "Groceries",
+            address: shop.address || "",
+            phone: shop.phone,
+            rating: shop.rating || 4.5,
+            reviews: shop.reviews || 0,
+            distance: "0 km",
+            open: shop.open !== false
+          }));
+          
+          // Update product counts
+          const shopsWithCounts = mappedShops.map((shop: Shop) => {
+            const products = JSON.parse(localStorage.getItem("shopProducts_" + shop.id) || "[]");
+            return { ...shop, productCount: products.length };
+          });
+          
+          setShops(shopsWithCounts);
+          // Store in localStorage as source of truth
+          localStorage.setItem("allShops", JSON.stringify(shopsWithCounts));
+          return;
+        }
+      } catch (err) {
+        console.log("MongoDB unavailable, using localStorage");
+      }
+      
+      // Fallback: Load from localStorage
+      const registeredShops = JSON.parse(localStorage.getItem("allShops") || "[]");
+      const shopsWithCounts = registeredShops.map((shop: any) => {
+        const products = JSON.parse(localStorage.getItem("shopProducts_" + shop.id) || "[]");
+        return { ...shop, productCount: products.length };
+      });
+      setShops(shopsWithCounts);
+    };
+    
+    loadShops();
 
     const cartItems = JSON.parse(localStorage.getItem("cartItems") || "[]");
     setCartCount(cartItems.reduce((s: number, i: { quantity: number }) => s + i.quantity, 0));
