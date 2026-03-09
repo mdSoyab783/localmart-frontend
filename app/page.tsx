@@ -185,198 +185,92 @@ export default function Homepage() {
         @keyframes float { from { transform: translateY(0px) rotate(-4deg); } to { transform: translateY(-16px) rotate(4deg); } }
       `}</style>
 
-      {/* NAVBAR */}
-      <nav style={{ background: "#fff", padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", position: "sticky", top: 0, zIndex: 100 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ background: "#FF6B6B", width: 36, height: 36, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🛍️</div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 800, fontSize: 20, color: "#1a1a2e", lineHeight: 1.2 }}>LocalMart</span>
-            <span style={{ fontSize: 11, color: "#FF6B6B", fontWeight: 700, display: "flex", alignItems: "center", gap: 3 }}>📍 {location}</span>
-          </div>
-        </div>
-
-        <div style={{ display: "flex", gap: 24 }}>
-          {[{ label: "Home", href: "/" }, { label: "Shops", href: "/shops" }, { label: "Offers", href: "/offers" }, { label: "Orders", href: "/orders" }].map((item) => (
-            <a key={item.label} href={item.href} className="nav-link" style={{ textDecoration: "none", color: "#1a1a2e", fontWeight: 700, fontSize: 15 }}>{item.label}</a>
-          ))}
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          {/* SEARCH IN NAVBAR */}
-          <div style={{ background: "#f5f5f5", borderRadius: 20, padding: "6px 14px", display: "flex", alignItems: "center", gap: 8, width: 220 }}>
-            <span style={{ fontSize: 14 }}>🔍</span>
-            <input
-              className="search-input"
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ border: "none", background: "transparent", fontSize: 13, fontFamily: "inherit", color: "#1a1a2e", fontWeight: 600, width: "100%", outline: "none" }}
-            />
-          </div>
-          <a href="/cart" style={{ position: "relative", textDecoration: "none", color: "inherit" }} className="btn-hover">
-            <div style={{ background: "#f5f5f5", padding: "8px 16px", borderRadius: 20, display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
-              🛒 Cart
-            </div>
-            {cartCount > 0 && (
-              <span style={{ position: "absolute", top: -6, right: -6, background: "#FF6B6B", color: "#fff", borderRadius: "50%", width: 18, height: 18, fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800 }}>
-                {cartCount}
-              </span>
-            )}
+      {/* NAVBAR - Flipkart Style */}
+      <div style={{ position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 8px rgba(0,0,0,0.12)" }}>
+        <nav style={{ background: "#2874f0", padding: "10px 24px", display: "flex", alignItems: "center", gap: 16 }}>
+          <a href="/" style={{ textDecoration: "none", display: "flex", flexDirection: "column", minWidth: 100 }}>
+            <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 800, fontSize: 22, color: "#fff", lineHeight: 1.1 }}>LocalMart</span>
+            <span style={{ fontSize: 11, color: "#ffe0b2", fontWeight: 600, display: "flex", alignItems: "center", gap: 3 }}>📍 {location}</span>
           </a>
-          {user ? (
-            <div style={{ position: "relative" }}>
-              <div onClick={() => setShowUserMenu(!showUserMenu)} style={{ background: "#1a1a2e", color: "#fff", padding: "6px 14px 6px 6px", borderRadius: 20, fontWeight: 700, fontSize: 14, display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-                <div style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", background: "#FF6B6B", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>
-                  {(user as any).avatar ? <img src={(user as any).avatar} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : "👤"}
+          <div style={{ flex: 1, background: "#fff", borderRadius: 4, display: "flex", alignItems: "center", padding: "6px 14px", gap: 10, maxWidth: 600 }}>
+            <input className="search-input" type="text" placeholder="Search for products, brands and more" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ border: "none", background: "transparent", fontSize: 14, fontFamily: "inherit", color: "#1a1a2e", fontWeight: 500, width: "100%", outline: "none" }} />
+            <span style={{ fontSize: 18, color: "#2874f0", cursor: "pointer" }}>🔍</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 20, marginLeft: "auto" }}>
+            {user ? (
+              <div style={{ position: "relative" }}>
+                <div onClick={() => setShowUserMenu(!showUserMenu)} style={{ color: "#fff", fontWeight: 700, fontSize: 14, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", background: "#FF6B6B", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>
+                    {(user as any).avatar ? <img src={(user as any).avatar} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : "👤"}
+                  </div>
+                  {user.name} ▾
                 </div>
-                {user.name} ▾
+                {showUserMenu && (
+                  <div style={{ position: "absolute", right: 0, top: "calc(100% + 12px)", background: "#fff", borderRadius: 4, boxShadow: "0 8px 30px rgba(0,0,0,0.15)", padding: 16, minWidth: 240, zIndex: 999, border: "1px solid #f0f0f0" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+                      <div style={{ width: 48, height: 48, borderRadius: 14, background: "linear-gradient(135deg, #FF6B6B, #FF8E53)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>👤</div>
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: 15, color: "#1a1a2e" }}>{user.name}</div>
+                        <div style={{ fontSize: 12, color: "#2874f0", fontWeight: 700 }}>LocalMart Member</div>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "12px 0", borderTop: "1px solid #f0f0f0", borderBottom: "1px solid #f0f0f0", marginBottom: 12 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#555" }}>📧 {user.email}</div>
+                    </div>
+                    <a href="/orders" style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", color: "#2874f0", fontWeight: 700, fontSize: 14, textDecoration: "none", marginBottom: 6 }}>📦 My Orders</a>
+                    <div onClick={() => { localStorage.removeItem("user"); setUser(null); setShowUserMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", color: "#FF6B6B", fontWeight: 800, fontSize: 14, cursor: "pointer", background: "#fff5f5" }}>🚪 Logout</div>
+                  </div>
+                )}
               </div>
-              {showUserMenu && (
-                <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", background: "#fff", borderRadius: 16, boxShadow: "0 8px 30px rgba(0,0,0,0.15)", padding: 16, minWidth: 240, zIndex: 999, border: "1px solid #f0f0f0" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-                    <div style={{ width: 48, height: 48, borderRadius: 14, overflow: "hidden", background: "linear-gradient(135deg, #FF6B6B, #FF8E53)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>
-                      {(user as any).avatar ? <img src={(user as any).avatar} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : "👤"}
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 800, fontSize: 15, color: "#1a1a2e" }}>{user.name}</div>
-                      <div style={{ fontSize: 12, color: "#FF6B6B", fontWeight: 700 }}>LocalMart Member</div>
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "12px 0", borderTop: "1px solid #f0f0f0", borderBottom: "1px solid #f0f0f0", marginBottom: 12 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#555" }}>📧 {user.email}</div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#555" }}>📞 {(user as any).phone || "Not provided"}</div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#555" }}>📍 {(user as any).address || "Not provided"}</div>
-                  </div>
-                  <div onClick={() => { localStorage.removeItem("user"); setUser(null); setShowUserMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", color: "#FF6B6B", fontWeight: 800, fontSize: 14, cursor: "pointer", borderRadius: 10, background: "#fff5f5" }}>
-                    🚪 Logout
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (<a href="/auth" style={{ background: "#1a1a2e", color: "#fff", padding: "8px 18px", borderRadius: 20, fontWeight: 700, fontSize: 14, cursor: "pointer", textDecoration: "none" }} className="btn-hover">Login</a>)}
-        </div>
-      </nav>
-
-      {/* HERO */}
-      <div style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)", padding: "32px 24px", position: "relative", overflow: "hidden", minHeight: 420 }}>
-        <div style={{ position: "absolute", top: -40, right: -40, width: 300, height: 300, borderRadius: "50%", background: "rgba(255,107,107,0.08)", pointerEvents: "none" }} />
-
-        <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "start" }}>
-
-          {/* LEFT SIDE - Text + Tabs */}
-          <div className="fade-in">
-            <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(24px, 3vw, 42px)", fontWeight: 800, color: "#fff", lineHeight: 1.2, marginBottom: 12 }}>Your Local Shops, <span style={{ color: "#FF6B6B" }}>Now at Your Fingertips</span></h1>
-
-
-
-            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginBottom: 24, lineHeight: 1.7 }}>
-              Order from your favorite local stores — groceries, clothing, daily essentials and more.
-            </p>
-
-            {/* TABS */}
-            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-              {[
-                { key: "trending", label: "🔥 Trending" },
-                { key: "upcoming", label: "🆕 New Arrivals" },
-                { key: "offers", label: "🎉 Offers" },
-              ].map((tab) => (
-                <button
-                  key={tab.key}
-                  className="tab-btn"
-                  onClick={() => setActiveTab(tab.key as any)}
-                  style={{ padding: "8px 18px", borderRadius: 24, border: "2px solid", borderColor: activeTab === tab.key ? "#FF6B6B" : "rgba(255,255,255,0.2)", background: activeTab === tab.key ? "#FF6B6B" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "inherit", position: "relative", overflow: "hidden" }}
-                >
-                  {tab.label}
-                  {activeTab === tab.key && (
-                    <span style={{ position: "absolute", bottom: 0, left: 0, height: 3, background: "#fff", borderRadius: 2, animation: "progress 4s linear forwards" }} />
-                  )}
-                </button>
-              ))}
-            </div>
-            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 12, fontWeight: 600 }}>
-              {activeTab === "trending" ? "🔥 Most popular products right now" : activeTab === "upcoming" ? "🆕 Freshly added to LocalMart" : "🎉 Best deals & discounts today"}
-            </p>
+            ) : (
+              <a href="/auth" style={{ background: "#fff", color: "#2874f0", padding: "8px 24px", borderRadius: 2, fontWeight: 700, fontSize: 14, textDecoration: "none" }}>Login</a>
+            )}
+            <a href="/cart" style={{ position: "relative", textDecoration: "none", color: "#fff", display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 14 }}>
+              🛒 Cart
+              {cartCount > 0 && (<span style={{ background: "#FF6B6B", color: "#fff", borderRadius: "50%", width: 18, height: 18, fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800 }}>{cartCount}</span>)}
+            </a>
           </div>
-
-          {/* RIGHT SIDE - Product Cards Showcase */}
-          <div style={{ position: "relative", height: "100%" }}>
-            <div className="tab-content" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, height: "100%", alignContent: "stretch" }}>
-              {featuredProducts
-                .filter(p => {
-                  if (activeTab === "offers") return (p as any).originalPrice > (p as any).price;
-                  if (activeTab === "upcoming") return (p as any).id > 2;
-                  return true;
-                })
-                .slice(0, 4)
-                .map((p, i) => (
-                  <div
-                    key={p.id}
-                    className="card-hover"
-                    onClick={() => window.location.href = `/product/${p.id}`}
-                    style={{
-                      background: "rgba(255,255,255,0.07)",
-                      borderRadius: 16,
-                      border: "1px solid rgba(255,255,255,0.1)",
-                      padding: 12,
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      cursor: "pointer",
-                      animation: "cardPop 0.4s ease " + (i * 0.1) + "s both",
-                      backdropFilter: "blur(8px)",
-                    }}
-                  >
-                    <div style={{ width: 80, height: 80, borderRadius: 12, background: (p as any).color || "#ffffff15", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 44, marginBottom: 8, overflow: "hidden" }}>
-                      {(p as any).image
-                        ? <img src={(p as any).image} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 12 }} />
-                        : p.emoji}
-                    </div>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: "#fff", textAlign: "center", marginBottom: 4, lineHeight: 1.3 }}>{p.name}</div>
-                    <div style={{ fontSize: 11, color: "#FF6B6B", fontWeight: 700 }}>🏪 {(p as any).shop || (p as any).shopName}</div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
-                      <span style={{ fontSize: 13, fontWeight: 900, color: "#fff" }}>₹{p.price}</span>
-                      <span style={{ fontSize: 11, color: "#aaa", textDecoration: "line-through" }}>₹{p.originalPrice}</span>
-                      <span style={{ fontSize: 10, fontWeight: 800, color: "#51CF66" }}>{Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)}% off</span>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      {/* CATEGORIES */}
-      <div style={{ padding: "48px 24px 24px", maxWidth: 1100, margin: "0 auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 800 }}>Shop by Category</h2>
-          <span style={{ color: "#FF6B6B", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>View All →</span>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 16 }}>
-          {categories.map((cat, i) => (
-            <div
-              key={cat.id}
-              className="card-hover fade-in"
-              onClick={() => setActiveCategory(cat.name)}
-              style={{
-                background: activeCategory === cat.name ? cat.color : "#fff",
-                border: "2px solid " + (activeCategory === cat.name ? cat.color : "#f0f0f0") + "",
-                borderRadius: 16,
-                padding: "24px 16px",
-                textAlign: "center",
-                animationDelay: (i * 0.08) + "s",
-              }}
-            >
-              <div style={{ fontSize: 36, marginBottom: 10 }}>{cat.icon}</div>
-              <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 4 }}>{cat.name}</div>
-              <div style={{ fontSize: 12, color: "#888", fontWeight: 600 }}>{cat.count}</div>
-            </div>
+        </nav>
+        <div style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "0 24px", display: "flex", alignItems: "center", overflowX: "auto", scrollbarWidth: "none" as "none" }}>
+          {[{ label: "Home", href: "/", icon: "🏠" }, { label: "Shops", href: "/shops", icon: "🏪" }, { label: "Offers", href: "/offers", icon: "🎁" }, { label: "Orders", href: "/orders", icon: "📦" }, { label: "Clothing", href: "/shops?cat=clothing", icon: "👗" }, { label: "Groceries", href: "/shops?cat=groceries", icon: "🛒" }, { label: "Electronics", href: "/shops?cat=electronics", icon: "📱" }, { label: "Beauty", href: "/shops?cat=beauty", icon: "💄" }, { label: "Daily Needs", href: "/shops?cat=daily", icon: "🧴" }, { label: "Food", href: "/shops?cat=food", icon: "🍱" }, { label: "Sell on LocalMart", href: "/dashboard", icon: "🏪" }].map((item) => (
+            <a key={item.label} href={item.href} style={{ textDecoration: "none", display: "flex", flexDirection: "column", alignItems: "center", padding: "10px 18px", gap: 4, borderBottom: "2px solid transparent", whiteSpace: "nowrap" as "nowrap" }} onMouseEnter={e => (e.currentTarget.style.borderBottomColor = "#2874f0")} onMouseLeave={e => (e.currentTarget.style.borderBottomColor = "transparent")}>
+              <span style={{ fontSize: 20 }}>{item.icon}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#333" }}>{item.label}</span>
+            </a>
           ))}
         </div>
       </div>
-
+      {/* BANNER CAROUSEL */}
+      <div style={{ background: "#f1f3f6", padding: "12px 24px" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+          {[
+            { bg: "linear-gradient(135deg, #e53935, #c62828)", title: "Big Saving Days", sub: "Min. 30% Off on Electronics", cta: "Shop Now", href: "/shops?cat=electronics" },
+            { bg: "linear-gradient(135deg, #1565c0, #0d47a1)", title: "Fresh Groceries", sub: "Order from local stores daily", cta: "Order Now", href: "/shops?cat=groceries" },
+            { bg: "linear-gradient(135deg, #2e7d32, #1b5e20)", title: "Fashion Week", sub: "Latest styles from local boutiques", cta: "Explore", href: "/shops?cat=clothing" },
+          ].map((banner, i) => (
+            <a key={i} href={banner.href} style={{ textDecoration: "none", background: banner.bg, borderRadius: 8, padding: "24px 20px", display: "flex", flexDirection: "column", gap: 8, cursor: "pointer", minHeight: 140 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: 1 }}>LocalMart Deals</span>
+              <span style={{ fontSize: 20, fontWeight: 900, color: "#fff", lineHeight: 1.2 }}>{banner.title}</span>
+              <span style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", fontWeight: 500 }}>{banner.sub}</span>
+              <span style={{ marginTop: "auto", background: "rgba(255,255,255,0.2)", color: "#fff", fontWeight: 800, fontSize: 12, padding: "6px 14px", borderRadius: 4, alignSelf: "flex-start" }}>{banner.cta} →</span>
+            </a>
+          ))}
+        </div>
+      </div>
+      {/* CATEGORIES */}
+      <div style={{ background: "#fff", padding: "24px", borderBottom: "1px solid #f0f0f0" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 800, marginBottom: 16, color: "#1a1a2e" }}>Shop by Category</h2>
+          <div style={{ display: "flex", gap: 12, overflowX: "auto", scrollbarWidth: "none" as "none", paddingBottom: 4 }}>
+            {categories.map((cat) => (
+              <div key={cat.id} onClick={() => setActiveCategory(cat.name)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", minWidth: 80, padding: "12px 8px", borderRadius: 8, background: activeCategory === cat.name ? "#e8f0fe" : "#f8f9fa", border: activeCategory === cat.name ? "2px solid #2874f0" : "2px solid transparent", transition: "all 0.2s" }}>
+                <span style={{ fontSize: 28 }}>{cat.icon}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: activeCategory === cat.name ? "#2874f0" : "#333", textAlign: "center", whiteSpace: "nowrap" as "nowrap" }}>{cat.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
       {/* FEATURED PRODUCTS */}
       <div style={{ padding: "24px 24px 40px", maxWidth: 1100, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
@@ -436,57 +330,30 @@ export default function Homepage() {
       </div>
 
       {/* NEARBY SHOPS */}
-      <div style={{ padding: "0 24px 48px", maxWidth: 1100, margin: "0 auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 800 }}>Nearby Shops</h2>
-          <span style={{ color: "#FF6B6B", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>View Map →</span>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
-          {nearbyShops.map((shop, i) => (
-            <div
-              key={shop.id}
-              className="card-hover fade-in"
-              style={{ background: "#fff", borderRadius: 16, padding: "20px", border: "1px solid #f0f0f0", animationDelay: (i * 0.08) + "s" }}
-            >
-              <div style={{ fontSize: 36, marginBottom: 12 }}>{shop.emoji}</div>
-              <div style={{ fontWeight: 800, fontSize: 16, marginBottom: 4 }}>{shop.name}</div>
-              <div style={{ fontSize: 13, color: "#888", fontWeight: 600, marginBottom: 10 }}>{shop.type}</div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#555" }}>📍 {shop.distance}</span>
-                <span style={{ fontSize: 12, fontWeight: 800, color: shop.open ? "#51CF66" : "#aaa" }}>
-                  <span className="shop-badge" style={{ background: shop.open ? "#51CF66" : "#ccc" }} />
-                  {shop.open ? "Open" : "Closed"}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* BANNER */}
-      <div style={{ margin: "0 auto 48px", maxWidth: 1100, padding: "0 24px" }}>
-        <div style={{ background: "linear-gradient(135deg, #FF6B6B, #FF8E53)", borderRadius: 24, padding: "40px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}>
-          <div>
-            <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: "#fff", fontWeight: 800, marginBottom: 8 }}>
-              🚀 Become a Shop Partner
-            </h3>
-            <p style={{ color: "rgba(255,255,255,0.85)", fontSize: 15, maxWidth: 400 }}>
-              List your local shop on LocalMart and reach thousands of customers in your area. It&apos;s free to get started!
-            </p>
+      <div style={{ background: "#fff", padding: "24px", borderBottom: "1px solid #f0f0f0" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1a1a2e" }}>Nearby Shops</h2>
+            <a href="/shops" style={{ color: "#2874f0", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>View All →</a>
           </div>
-          <a
-            href="/dashboard"
-            style={{ background: "#fff", color: "#FF6B6B", border: "none", padding: "14px 28px", borderRadius: 14, fontWeight: 900, fontSize: 15, fontFamily: "inherit", cursor: "pointer", textDecoration: "none" }}
-          >
-            Register Your Shop →
-          </a>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 12 }}>
+            {nearbyShops.map((shop) => (
+              <a key={shop.id} href="/shops" style={{ textDecoration: "none", background: "#f8f9fa", borderRadius: 8, padding: "16px", border: "1px solid #f0f0f0", display: "flex", flexDirection: "column", gap: 6 }}>
+                <div style={{ fontSize: 32 }}>{shop.emoji}</div>
+                <div style={{ fontWeight: 800, fontSize: 15, color: "#1a1a2e" }}>{shop.name}</div>
+                <div style={{ fontSize: 12, color: "#888", fontWeight: 600 }}>{shop.type}</div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "#555" }}>📍 {shop.distance}</span>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: shop.open ? "#2e7d32" : "#999", background: shop.open ? "#e8f5e9" : "#f5f5f5", padding: "2px 8px", borderRadius: 10 }}>{shop.open ? "Open" : "Closed"}</span>
+                </div>
+              </a>
+            ))}
+          </div>
         </div>
       </div>
-
-      {/* FOOTER */}
       <footer style={{ background: "#1a1a2e", color: "rgba(255,255,255,0.6)", padding: "30px 24px", textAlign: "center" }}>
         <div style={{ fontFamily: "'Playfair Display', serif", color: "#fff", fontSize: 20, fontWeight: 800, marginBottom: 8 }}>🛍️ LocalMart</div>
-        <p style={{ fontSize: 13 }}>Supporting local businesses in Taulihawa-Kapilvastu, Nepal • Made with ❤️</p>
+        <p style={{ fontSize: 13 }}>Supporting local businesses • Made with ❤️</p>
       </footer>
     </div>
   );
